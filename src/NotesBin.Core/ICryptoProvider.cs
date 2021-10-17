@@ -12,5 +12,6 @@ public interface ICryptoProvider
     Task<byte[]> AesDecrypt(byte[] iv, byte[] aesKey, byte[] encryptedData);
 
     Task<byte[]> RsaEncrypt(byte[] publicKey, byte[] rawData);
+    Task<byte[]> RsaDecrypt(byte[] privateKey, byte[] encryptedData);
 
 }

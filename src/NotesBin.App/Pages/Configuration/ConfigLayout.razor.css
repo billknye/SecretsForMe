@@ -67,14 +67,14 @@
     overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
 }
 
-.sidebar .nav-link {
+.sidebar ::deep .nav-link {
     font-weight: 500;
     color: #333;
 }
 
-    .sidebar .nav-link.active {
-        color: #2470dc;
-    }
+.sidebar ::deep .nav-link.active {
+    color: #2470dc;
+}
 
         .sidebar .nav-link:hover .feather,
         .sidebar .nav-link.active .feather {

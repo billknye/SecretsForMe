@@ -151,4 +151,20 @@ export function rsaEncrypt(publicKey, rawData) {
         });
     });
 }
+export function rsaDecrypt(privateKey, encryptedData) {
+    return __awaiter(this, void 0, void 0, function () {
+        var key, decrypted;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, window.crypto.subtle.importKey("pkcs8", privateKey.buffer, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["decrypt"])];
+                case 1:
+                    key = _a.sent();
+                    return [4 /*yield*/, window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, key, encryptedData.buffer)];
+                case 2:
+                    decrypted = _a.sent();
+                    return [2 /*return*/, new Uint8Array(decrypted, 0, decrypted.byteLength)];
+            }
+        });
+    });
+}
 //# sourceMappingURL=crypto.js.map

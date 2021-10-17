@@ -13,34 +13,46 @@
     code.
 </p>
 
+<div class="container">
+    <div class="row">
+        <div class="card col-3">
+            <ul class="list-group list-group-flush">
+                @foreach (var asymmetricKey in config.AsymmetricKeys)
+                {
+                    <li class="list-grou-item">@asymmetricKey.Id</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<h4>Symmetric Keys</h4>
+<p>
+    Symmetric keys are used to encrypt and decrypt data.  A default symmetric key is used to encrypt and decrypt the metadata such as the
+    index and configuration details.  Multiple symmetric keys can be used to provide various levels of access or even allow mulitple users
+    to share notes.  Individual notes can be only be encrypted by a single key but symmetric keys can be accessible by more than one
+    asymmetric key
+</p>
+
 <table class="table">
     <thead>
         <tr>
-            <th scope="col">Attributes</th>
             <th scope="col">Id</th>
             <th scope="col">Name</th>
             <th scope="col">Actions</th>
         </tr>
     </thead>
     <tbody>
-        
+        @foreach (var symmetricKey in config.SymmetricKeys)
+        {
         <tr>
-            <td>[Expired]</td>
-            <td>@Guid.NewGuid()</td>
-            <td>Some name</td>
-            <td>Something</td>
+            <td>@symmetricKey.Id</td>
+            <td>@symmetricKey.Name</td>
+            <td></td>
         </tr>
-        
+        }
     </tbody>
 </table>
-
-<h4>Symmetric Keys</h4>
-<p>
-    Symmetric keys are used to encrypt and decrypt data.  A default symmetric key is used to encrypt and decrypt the metadata such as the 
-    index and configuration details.  Multiple symmetric keys can be used to provide various levels of access or even allow mulitple users 
-    to share notes.  Individual notes can be only be encrypted by a single key but symmetric keys can be accessible by more than one
-    asymmetric key
-</p>
 
 @code {
 

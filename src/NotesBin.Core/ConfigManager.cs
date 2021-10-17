@@ -1,10 +1,12 @@
 ﻿using Blazored.LocalStorage;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace NotesBin.Core;
 
 public class ConfigManager
 {
+    private readonly ILogger<ConfigManager> logger;
     private readonly ILocalStorageService localStorageService;
     private readonly ICryptoProvider cryptoProvider;
 
@@ -20,20 +22,25 @@ public class ConfigManager
     /// </summary>
     private PersistedConfiguration? loadedConfiguration;
 
-
     private List<SymmetricKey>? symmetricKeys;
     private List<AsymmetricKey>? asymmetricKeys;
 
+    public IEnumerable<AsymmetricKey> AsymmetricKeys => asymmetricKeys ?? Enumerable.Empty<AsymmetricKey>();
+    public IEnumerable<SymmetricKey> SymmetricKeys => symmetricKeys ?? Enumerable.Empty<SymmetricKey>();
 
-    public ConfigManager(ILocalStorageService localStorageService, ICryptoProvider cryptoProvider)
+
+    public ConfigManager(ILogger<ConfigManager> logger, ILocalStorageService localStorageService, ICryptoProvider cryptoProvider)
     {
+        this.logger = logger;
         this.localStorageService = localStorageService;
         this.cryptoProvider = cryptoProvider;
     }
 
     public async Task Initialize()
     {
+        using var _ = logger.BeginScope("Initialize");
         string existingConfig = null;
+
         try
         {
             await cryptoProvider.Initialize();
@@ -41,23 +48,28 @@ public class ConfigManager
         }
         catch (Exception ex)
         {
+            logger.LogWarning($"Error initializing: {ex}");
             State = ConfigState.ErrorLoading;
             LoadingException = ex;
         }
 
         if (existingConfig == null)
         {
+            logger.LogInformation("No existing config, new setup");
             State = ConfigState.Empty;
             return;
         }
 
         try
         {
+            logger.LogInformation("Existing config, loading...");
             loadedConfiguration = System.Text.Json.JsonSerializer.Deserialize<PersistedConfiguration>(existingConfig);
             State = ConfigState.Loaded;
+            logger.LogInformation("Existing config loaded.");
         }
         catch (Exception ex)
         {
+            logger.LogWarning($"Error loading existing config: {ex}");
             State = ConfigState.ErrorLoading;
             LoadingException = ex;
         }
@@ -79,8 +91,13 @@ public class ConfigManager
 
     public async Task<bool> TryUnlock(Guid credentialId, string unlockData)
     {
+        logger.LogInformation("Attempting Unlock via credential {credentialId}", credentialId);
+
         if (State != ConfigState.Loaded || loadedConfiguration == null)
             throw new InvalidOperationException();
+
+        var asymmetricKeys = new List<AsymmetricKey>();
+        var symmetricKeys = new List<SymmetricKey>();
 
         foreach (var asymmetricKey in loadedConfiguration.AsymmetricKeys)
         {
@@ -92,12 +109,58 @@ public class ConfigManager
             {
                 var bytes = await cryptoProvider.DeriveBytes(unlockData, 100000, credential.Id.ToByteArray());
                 var privateBytes = await cryptoProvider.AesDecrypt(asymmetricKey.Id.ToByteArray(), bytes, credential.EncryptedAsymmetricKeyPrivateKey);
+
+                var loadedAsymmetricKey = new AsymmetricKey
+                {
+                    Id = asymmetricKey.Id,
+                    PublicKey = asymmetricKey.PublicKey,
+                    PrivateKey = privateBytes
+                };
+
+                asymmetricKeys.Add(loadedAsymmetricKey);
+
+                loadedAsymmetricKey.Credentials.Add(new Credential
+                {
+                    Id = credential.Id,
+                    Name = credential.Name,
+                    AesKey = bytes
+                });
+
+                foreach (var symmetricKey in loadedConfiguration.SymmetricKeys)
+                {
+                    var reference = asymmetricKey.SymmetricKeyReferences.FirstOrDefault(n => n.SymmetricKeyId == symmetricKey.Id);
+                    if (reference == null)
+                    {
+                        logger.LogWarning("Could not find reference for symmetric key: {id}", symmetricKey.Id);
+                        continue;
+                    }
+
+                    var symmetricKeyBytes = await cryptoProvider.RsaDecrypt(privateBytes, reference.EncryptedSymmetricKey);
+
+                    var decryptedMetaData = await cryptoProvider.AesDecrypt(symmetricKey.Id.ToByteArray(), symmetricKeyBytes, symmetricKey.EncryptedSymmetricKeyMetadata);
+                    var deserialiedMetaData = System.Text.Json.JsonSerializer.Deserialize<SymmetricKeyMetadata>(Encoding.UTF8.GetString(decryptedMetaData));
+
+                    var sym = new SymmetricKey
+                    {
+                        Id = symmetricKey.Id,
+                        Key = symmetricKeyBytes,
+                        Name = deserialiedMetaData?.Name ?? "Unnamed Key"
+                    };
+
+                    symmetricKeys.Add(sym);
+                }
+
+                this.asymmetricKeys = asymmetricKeys;
+                this.symmetricKeys = symmetricKeys;
+
                 State = ConfigState.Ready;
+
+                logger.LogInformation("Unlock succeeded");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger.LogWarning($"Unlock failed: {ex}");
                 return false;
             }
         }
@@ -107,6 +170,8 @@ public class ConfigManager
 
     public async Task ResetForNewSetup()
     {
+        logger.LogInformation("Resetting state for new setup");
+
         await localStorageService.RemoveItemAsync("NotesBinConfiguration");
 
         symmetricKeys = new List<SymmetricKey>();
@@ -116,6 +181,8 @@ public class ConfigManager
 
     public async Task SaveConfiguration()
     {
+        logger.LogInformation("Begin Save Configuration");
+
         if (symmetricKeys == null || asymmetricKeys == null)
             throw new InvalidOperationException();
 
@@ -129,6 +196,8 @@ public class ConfigManager
         var serializedConfiguration = System.Text.Json.JsonSerializer.Serialize(persisted);
 
         await localStorageService.SetItemAsStringAsync("NotesBinConfiguration", serializedConfiguration);
+
+        logger.LogInformation($"Save complete, {serializedConfiguration.Length} characters.");
     }
 
     private async Task<PersistedSymmetricKey> PersistSymmetricKey(SymmetricKey symmetricKey)
