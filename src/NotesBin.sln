@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesBin.App", "NotesBin.App\NotesBin.App.csproj", "{96FA0DAF-3F8B-41E9-8BA7-9F6D00AB1F11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesBin.App", "NotesBin.App\NotesBin.App.csproj", "{96FA0DAF-3F8B-41E9-8BA7-9F6D00AB1F11}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{655830BC-5BEA-422B-B354-C30542CD224B}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesBin.App.Tests", "NotesBin.App.Tests\NotesBin.App.Tests.csproj", "{1CAFA22D-5D15-4F7E-B30B-7928EE625A15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesBin.App.Tests", "NotesBin.App.Tests\NotesBin.App.Tests.csproj", "{1CAFA22D-5D15-4F7E-B30B-7928EE625A15}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesBin.Core", "NotesBin.Core\NotesBin.Core.csproj", "{69B50FCD-F134-41A6-9E84-07F6ECB98838}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +30,10 @@ Global
 		{1CAFA22D-5D15-4F7E-B30B-7928EE625A15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CAFA22D-5D15-4F7E-B30B-7928EE625A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CAFA22D-5D15-4F7E-B30B-7928EE625A15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69B50FCD-F134-41A6-9E84-07F6ECB98838}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69B50FCD-F134-41A6-9E84-07F6ECB98838}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69B50FCD-F134-41A6-9E84-07F6ECB98838}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69B50FCD-F134-41A6-9E84-07F6ECB98838}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

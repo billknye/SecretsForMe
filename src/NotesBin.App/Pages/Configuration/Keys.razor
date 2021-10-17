@@ -1,0 +1,47 @@
+﻿@page "/config/keys"
+@using NotesBin.Core
+@layout ConfigLayout
+@inject ConfigManager config
+
+<h3>Keys</h3>
+
+<h4>Asymmetric Keys</h4>
+
+<p>
+    Asymmetric keys are Public/Private key pairs used to encrypt symmetric keys.  Each asymmetric key must have at least one credential
+    which can be used to decrypt the private key.  An asymmetric key can have multiple credentials, for example a password and a recovery
+    code.
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Attributes</th>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+        <tr>
+            <td>[Expired]</td>
+            <td>@Guid.NewGuid()</td>
+            <td>Some name</td>
+            <td>Something</td>
+        </tr>
+        
+    </tbody>
+</table>
+
+<h4>Symmetric Keys</h4>
+<p>
+    Symmetric keys are used to encrypt and decrypt data.  A default symmetric key is used to encrypt and decrypt the metadata such as the 
+    index and configuration details.  Multiple symmetric keys can be used to provide various levels of access or even allow mulitple users 
+    to share notes.  Individual notes can be only be encrypted by a single key but symmetric keys can be accessible by more than one
+    asymmetric key
+</p>
+
+@code {
+
+}
