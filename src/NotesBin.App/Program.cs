@@ -12,9 +12,6 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<ConfigManager>();
-builder.Services.AddScoped<CredentialProvider>();
-builder.Services.AddScoped<AsymmetricProvider>();
-builder.Services.AddScoped<SymmetricProvider>();
 builder.Services.AddScoped<ICryptoProvider, JsCryptoProvider>();
 builder.Services.AddScoped<NotesManagerSetupProvider>();
 builder.Services.AddScoped<FileUtilities>();

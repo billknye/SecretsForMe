@@ -55,7 +55,7 @@ else
     protected override void OnInitialized()
     {
         model = new UnlockModel();
-        credentials = config.GetPersistedCredentials();
+        credentials = config.GetLoadedCredentials();
         base.OnInitialized();
     }
 
