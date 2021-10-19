@@ -1,9 +1,9 @@
 export function downloadFileBytes(fileName, contentType, fileBytes) {
     // Create the URL
-    var file = new File([fileBytes], fileName, { type: contentType });
-    var exportUrl = URL.createObjectURL(file);
+    const file = new File([fileBytes], fileName, { type: contentType });
+    const exportUrl = URL.createObjectURL(file);
     // Create the <a> element and click on it
-    var a = document.createElement("a");
+    const a = document.createElement("a");
     document.body.appendChild(a);
     a.href = exportUrl;
     a.download = fileName;
@@ -14,7 +14,7 @@ export function downloadFileBytes(fileName, contentType, fileBytes) {
     try {
         URL.revokeObjectURL(exportUrl);
     }
-    catch (_a) {
+    catch {
         // Empty on purpose
     }
 }

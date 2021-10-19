@@ -13,6 +13,7 @@ builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<ConfigManager>();
 builder.Services.AddScoped<ICryptoProvider, JsCryptoProvider>();
+builder.Services.AddScoped<IFileSystemProvider, IndexedDbFileSystemProvider>();
 builder.Services.AddScoped<NotesManagerSetupProvider>();
 builder.Services.AddScoped<FileUtilities>();
 

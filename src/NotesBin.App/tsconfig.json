@@ -4,9 +4,11 @@
     "noEmitOnError": true,
     "removeComments": false,
     "sourceMap": true,
-    "module": "es6",
-    "target": "es5",
-    "lib": ["ES2015", "DOM"]
+    "module": "esnext",
+    "moduleResolution": "Node",
+    "noUnusedLocals": true,
+    "target": "esnext",
+    "lib": ["esnext", "dom"]
   },
   "exclude": [
     "node_modules"
