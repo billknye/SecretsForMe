@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.Extensions.Logging;
+using NotesBin.Core.Persistence;
 using System.Text;
 
 namespace NotesBin.Core;
@@ -39,7 +40,7 @@ public class ConfigManager
     public async Task Initialize()
     {
         using var _ = logger.BeginScope("Initialize");
-        string existingConfig = null;
+        string? existingConfig = null;
 
         try
         {

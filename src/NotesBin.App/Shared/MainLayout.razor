@@ -1,7 +1,9 @@
 ﻿@using NotesBin.Core
+@using NotesBin.Core.FileSystem
 @inherits LayoutComponentBase
 @inject NavigationManager navigation
 @inject ConfigManager config
+@inject FileSystemManager fileSystem
 
 @if (loading)
 {
@@ -11,33 +13,87 @@
 }
 else
 {
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">NotesBin</a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" @onclick="ToggleNavMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+                <a class="nav-link px-3" href="/config">Configuration</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar @NavMenuCssClass">
+                <div class="position-sticky pt-3">
+                    @if (indices == null)
+                    {
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 text-muted">
+                            <span>Loading...</span>
+                        </h6>
+                    }
+                    else
+                    {
+                    <ul class="nav flex-column">
+                        @foreach (var item in indices)
+                        {
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="/config" Match="NavLinkMatch.All">
+                                    <i class="fas fa-desktop"></i>
+                                    @item.Name
+                                </NavLink>
+                                
+                                <a class="ellipsis" style=" " href="javascript:void(0);" aria-label="Refresh" @onclick="Refresh">
+                                    <i class="fas fa-ellipsis-v" title="Menu" />
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                    }
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-2">
+                @Body
+            </main>
+        </div>
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
 }
 
 @code {
     bool loading;
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private IEnumerable<IndexEntry>? indices;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
 
     override protected async Task OnInitializedAsync()
     {
         loading = true;
 
+        /*navigation.LocationChanged += async (o, e) =>
+        {
+            this.indices = await fileSystem.GetRootEntries();
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(this.indices));
+            this.StateHasChanged();
+        };*/
+
         if (config.State == ConfigState.Ready)
         {
             loading = false;
+            
+            this.indices = await fileSystem.GetRootEntries();
             return;
         }
 
@@ -56,5 +112,12 @@ else
         {
             navigation.NavigateTo("/config/unlock");
         }
+
     }
+
+    private async Task Refresh()
+    {        
+        this.indices = await fileSystem.GetRootEntries();
+    }
+
 }

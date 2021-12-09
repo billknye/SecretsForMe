@@ -1,3 +1,3 @@
-﻿namespace NotesBin.Core;
+﻿namespace NotesBin.Core.Persistence;
 
 public record PersistedConfiguration(PersistedAsymmetricKey[] AsymmetricKeys, PersistedSymmetricKey[] SymmetricKeys);

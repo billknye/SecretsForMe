@@ -3,7 +3,7 @@ using NotesBin.Core;
 
 namespace NotesBin.App;
 
-public class IndexedDbFileSystemProvider : IFileSystemProvider
+public class IndexedDbFileSystemProvider : IBlobProvider
 {
     private readonly ILogger<IndexedDbFileSystemProvider> logger;
     private readonly IJSRuntime js;
@@ -16,9 +16,9 @@ public class IndexedDbFileSystemProvider : IFileSystemProvider
         this.js = js;
     }
 
-    public async Task<byte[]> Get(string key)
+    public async Task<byte[]> Get(Guid key)
     {
-        return await db.InvokeAsync<byte[]>("getBlob", key);
+        return await db.InvokeAsync<byte[]>("getBlob", key.ToString());
     }
 
     public async Task Initialize()
@@ -28,12 +28,12 @@ public class IndexedDbFileSystemProvider : IFileSystemProvider
         db = await dbLib.InvokeAsync<IJSObjectReference>("createIndexedDb");
     }
 
-    public async Task<bool> Put(string key, string contentType, string etag, byte[] data, string? expectedEtag = null)
+    public async Task<bool> Put(Guid key, string contentType, string etag, byte[] data, string? expectedEtag = null)
     {
-        return await db.InvokeAsync<bool>("storeBlob", key, contentType, etag, data, expectedEtag);
+        return await db.InvokeAsync<bool>("storeBlob", key.ToString(), contentType, etag, data, expectedEtag);
     }
 
-    public Task<bool> Remove(string key, string etag)
+    public Task<bool> Remove(Guid key, string etag)
     {
         throw new NotImplementedException();
     }
