@@ -613,4 +613,3 @@ export interface IDBPCursorWithValueIteratorValue<DBTypes extends DBSchema | unk
      */
     continuePrimaryKey<T>(this: T, key: CursorKey<DBTypes, StoreName, IndexName>, primaryKey: StoreKey<DBTypes, StoreName>): void;
 }
-//# sourceMappingURL=entry.d.ts.map

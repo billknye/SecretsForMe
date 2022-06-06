@@ -3,7 +3,7 @@
   "defaultProvider": "unpkg",
   "libraries": [
     {
-      "library": "idb@6.1.5",
+      "library": "idb@7.0.1",
       "destination": "wwwroot/assets/idb"
     }
   ]

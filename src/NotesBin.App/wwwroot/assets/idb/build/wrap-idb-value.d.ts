@@ -32,4 +32,3 @@ interface Unwrap {
 }
 export declare const unwrap: Unwrap;
 export {};
-//# sourceMappingURL=wrap-idb-value.d.ts.map

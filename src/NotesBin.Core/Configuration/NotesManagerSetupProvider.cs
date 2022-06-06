@@ -1,4 +1,5 @@
 ﻿using Blazored.LocalStorage;
+using NotesBin.Core.Content;
 
 namespace NotesBin.Core.Configuration;
 
@@ -19,7 +20,10 @@ public class NotesManagerSetupProvider
         var credential = await configManager.AddCredential(asymmetricKey, name, password);
         await configManager.AddSymmetricKeyReference(symmetricKey, asymmetricKey);
 
-        //var contentProvider = 
+        await configManager.AddContentProvider(symmetricKey, "Default IndexedDb", new Dictionary<string, string>
+        {
+            { nameof(IndexedDbContentProvider.ContentProviderTypeId), IndexedDbContentProvider.ContentProviderTypeId.ToString() }
+        });
 
         await configManager.SaveConfiguration();
     }

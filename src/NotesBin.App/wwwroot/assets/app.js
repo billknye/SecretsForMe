@@ -1,4 +1,4 @@
-import { openDB } from './idb/build/esm/index.js';
+import { openDB } from './idb/build/index.js';
 export async function createIndexedDb() {
     var instance = new NotesBinIndexedDb();
     await instance.initialize();
@@ -17,27 +17,31 @@ export class NotesBinIndexedDb {
         });
     }
     async getBlob(key) {
+        console.log('index get', key);
         var bits = await this.db.get('objects', key);
-        if (bits instanceof Uint8Array)
+        console.log('index got', bits);
+        if (bits)
             return bits;
         return null;
     }
     async storeBlob(key, contentType, etag, blob, expectedEtag) {
         if (expectedEtag == undefined || expectedEtag == null) {
             var obj = {
-                blob: blob,
+                id: key,
+                blobData: blob,
                 contentType: contentType,
                 etag: etag
             };
             await this.db.put('objects', obj, key);
             return true;
         }
-        var tx = this.db.transaction('objects', "readwrite");
+        var tx = this.db.transaction('objects', 'readwrite');
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key);
         if (existing == null || existing.etag == expectedEtag) {
             var obj = {
-                blob: blob,
+                id: key,
+                blobData: blob,
                 contentType: contentType,
                 etag: etag
             };

@@ -1,0 +1,28 @@
+﻿@page "/config/db/{id:guid}"
+@using System.Text.Json
+@layout ConfigLayout
+@inject ConfigManager config
+
+<h3>@contentProvider.Name</h3>
+<em>@contentProvider.Id</em>
+
+@if (contentProvider is LoadedContentProvider loadedContentProvider)
+{
+<pre>
+    @(System.Text.Json.JsonSerializer.Serialize(loadedContentProvider.GetProviderOptions(), new JsonSerializerOptions { WriteIndented = true }))
+</pre>
+}
+
+@code {
+    [Parameter]
+    public Guid Id{ get; set; }
+
+    private ContentProvider contentProvider;
+
+    protected override void OnInitialized()
+    {
+        contentProvider = config.ContentProviders.FirstOrDefault(n => n.Id == Id);
+
+        base.OnInitialized();
+    }
+}

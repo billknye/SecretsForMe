@@ -26,12 +26,15 @@ public class CryptoBlobProvider : IBlobProvider
         return blobProvider.Initialize();
     }
 
-    public async Task<byte[]> Get(Guid key)
+    public async Task<Blob?> Get(Guid key)
     {
-        var encryptedBytes = await blobProvider.Get(key);
+        var encryptedDoc = await blobProvider.Get(key);
+        if (encryptedDoc == null)
+            return null;
 
         var ivs = key.ToByteArray();
-        return await cryptoProvider.AesDecrypt(ivs, symmetricKey.Key, encryptedBytes);
+        var decrypted = await cryptoProvider.AesDecrypt(ivs, symmetricKey.Key, encryptedDoc.BlobData);
+        return new Blob(key, encryptedDoc.Etag, encryptedDoc.ContentType, decrypted);
     }
 
     public async Task<bool> Put(Guid key, string contentType, string etag, byte[] data, string? expectedEtag = null)

@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noEmitOnError": true,
     "removeComments": false,
     "sourceMap": true,
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "Node",
     "noUnusedLocals": true,
     "target": "esnext",
-    "lib": ["esnext", "dom"]
+    "lib": [ "esnext", "dom" ]
   },
   "exclude": [
     "node_modules"

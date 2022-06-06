@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using NotesBin.Core.Content
+@inherits LayoutComponentBase
 @inject NavigationManager navigation
 @inject ConfigManager config
 @inject FileSystemManager fileSystem
@@ -28,30 +29,26 @@ else
         <div class="row">
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar @NavMenuCssClass">
                 <div class="position-sticky pt-3">
-                    @if (indices == null)
-                    {
-                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 text-muted">
-                            <span>Loading...</span>
-                        </h6>
-                    }
-                    else
-                    {
                     <ul class="nav flex-column">
-                        @foreach (var item in indices)
+                        @foreach (var item in contentProvider.GetDirectories(null))
                         {
                             <li class="nav-item">
-                                <NavLink class="nav-link" href="/config" Match="NavLinkMatch.All">
-                                    <i class="fas fa-desktop"></i>
+                                <NavLink class="nav-link" href="@($"/dir/{item.Id}")" Match="NavLinkMatch.All">
+                                    <i class="fas fa-folder"></i>
                                     @item.Name
                                 </NavLink>
-                                
-                                <a class="ellipsis" style=" " href="javascript:void(0);" aria-label="Refresh" @onclick="Refresh">
-                                    <i class="fas fa-ellipsis-v" title="Menu" />
-                                </a>
                             </li>
                         }
-                    </ul>
-                    }
+                        @foreach (var item in contentProvider.GetContentItems(null))
+                        {
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="@($"/ci/{item.Id}")" Match="NavLinkMatch.All">
+                                    <i class="fas fa-file"></i>
+                                    @item.Name
+                                </NavLink>
+                            </li>
+                        }
+                    </ul>                    
                 </div>
             </nav>
 
@@ -69,21 +66,19 @@ else
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private IEnumerable<IndexEntry>? indices;
+    private IContentProvider? contentProvider;
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
-    override protected async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        this.indices = await fileSystem.GetRootEntries();
-    }
+        contentProvider = config.ContentProviders.OfType<LoadedContentProvider>().First().ContentProvider;
 
-    private async Task Refresh()
-    {        
-        this.indices = await fileSystem.GetRootEntries();
+
+        base.OnInitialized();
     }
 
 }

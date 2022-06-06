@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using NotesBin.Core.Configuration.Persistence;
 using System.Text;
 
@@ -7,9 +8,11 @@ namespace NotesBin.Core.Configuration;
 
 public class ConfigManager
 {
+    private readonly ILoggerFactory loggerFactory;
     private readonly ILogger<ConfigManager> logger;
     private readonly ILocalStorageService localStorageService;
     private readonly ICryptoProvider cryptoProvider;
+    private readonly IJSRuntime js;
 
     public ConfigState State { get; private set; }
 
@@ -29,12 +32,15 @@ public class ConfigManager
 
     public IEnumerable<AsymmetricKey> AsymmetricKeys => asymmetricKeys ?? Enumerable.Empty<AsymmetricKey>();
     public IEnumerable<SymmetricKey> SymmetricKeys => symmetricKeys ?? Enumerable.Empty<SymmetricKey>();
+    public IEnumerable<ContentProvider> ContentProviders => contentProviders ?? Enumerable.Empty<ContentProvider>();
 
-    public ConfigManager(ILogger<ConfigManager> logger, ILocalStorageService localStorageService, ICryptoProvider cryptoProvider)
+    public ConfigManager(ILoggerFactory loggerFactory, ILogger<ConfigManager> logger, ILocalStorageService localStorageService, ICryptoProvider cryptoProvider, IJSRuntime js)
     {
+        this.loggerFactory = loggerFactory;
         this.logger = logger;
         this.localStorageService = localStorageService;
         this.cryptoProvider = cryptoProvider;
+        this.js = js;
     }
 
     public async Task Initialize()
@@ -161,8 +167,29 @@ public class ConfigManager
                     });
                 }
 
+                var contentProviders = new List<ContentProvider>();
+
+                foreach (var contentProvider in loadedConfiguration.ContentProviders)
+                {
+                    var symmetricKey = symmetricKeys.First(n => n.Id == contentProvider.SymmetricKeyId);
+
+                    if (symmetricKey is LoadedSymmetricKey loadedSymmetricKey)
+                    {
+                        var decryptedProviderOptions = await cryptoProvider.AesDecrypt(contentProvider.Id.ToByteArray(), loadedSymmetricKey.Key, contentProvider.EncryptedProviderData);
+                        var providerOptions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Encoding.UTF8.GetString(decryptedProviderOptions));
+                        var loadedContentProvider = new LoadedContentProvider(loggerFactory, contentProvider.Id, loadedSymmetricKey, contentProvider.Name, js, cryptoProvider, providerOptions);
+                        await loadedContentProvider.ContentProvider.Initialize();
+                        contentProviders.Add(loadedContentProvider);
+                    }
+                    else if (symmetricKey is PassThroughSymmetricKey passThroughSymmetricKey)
+                    {
+                        contentProviders.Add(new PassThroughContentProvider(contentProvider.Id, contentProvider.SymmetricKeyId, contentProvider.Name, contentProvider));
+                    }
+                }
+
                 this.asymmetricKeys = asymmetricKeys;
                 this.symmetricKeys = symmetricKeys;
+                this.contentProviders = contentProviders;
 
                 State = ConfigState.Ready;
 
@@ -187,6 +214,7 @@ public class ConfigManager
 
         symmetricKeys = new List<SymmetricKey>();
         asymmetricKeys = new List<AsymmetricKey>();
+        contentProviders = new List<ContentProvider>();
         State = ConfigState.Ready;
     }
 
@@ -194,7 +222,7 @@ public class ConfigManager
     {
         logger.LogInformation("Begin Save Configuration");
 
-        if (symmetricKeys == null || asymmetricKeys == null)
+        if (symmetricKeys == null || asymmetricKeys == null || contentProviders == null)
             throw new InvalidOperationException();
 
         var asymmetricTasks = asymmetricKeys.Select(n => PersistAsymmetricKey(n));
@@ -360,6 +388,22 @@ public class ConfigManager
         {
             SymmetricKey = symmetricKey
         });
+
+        return Task.CompletedTask;
+    }
+
+    public Task AddContentProvider(LoadedSymmetricKey symmetricKey, string name, Dictionary<string, string> providerOptions)
+    {
+        if (symmetricKeys == null || State != ConfigState.Ready)
+            throw new InvalidOperationException();
+
+        if (contentProviders == null)
+            throw new InvalidOperationException();
+
+        ArgumentNullException.ThrowIfNull(symmetricKey);
+
+        var id = Guid.NewGuid();
+        contentProviders.Add(new LoadedContentProvider(loggerFactory, id, symmetricKey, name, js, cryptoProvider, providerOptions));
 
         return Task.CompletedTask;
     }

@@ -1,10 +1,24 @@
 ﻿
-import { IDBPDatabase, openDB } from './idb/build/esm/index.js';
+import { openDB, DBSchema, IDBPDatabase } from './idb/build/index.js';
 
 interface NotesBinDocument {
+    id: string,
     etag: string,
     contentType: string,
-    blob: Uint8Array
+    blobData: Uint8Array
+}
+
+interface NotesBinDb extends DBSchema {
+    objects: {
+        key: string,
+        value: {
+            id: string,
+            etag: string,
+            contentType: string,
+            blobData: Uint8Array
+        },
+        indexes: {}
+    };
 }
 
 export async function createIndexedDb(): Promise<NotesBinIndexedDb> {
@@ -19,20 +33,25 @@ export function testStatup(): void {
 
 export class NotesBinIndexedDb {
 
-    private db: IDBPDatabase;
+    private db: IDBPDatabase<NotesBinDb>;
 
     public async initialize(): Promise<void> {
-        this.db = await openDB('NotesBin', 1, {
-            upgrade(u) {
+        this.db = await openDB<NotesBinDb>('NotesBin', 1, {
+            upgrade(u: IDBPDatabase<NotesBinDb>) {
                 u.createObjectStore('objects');
             }
-        } );
+        });
     }
 
-    async getBlob(key: string): Promise<Uint8Array> {
+    async getBlob(key: string): Promise<NotesBinDocument> {
+        console.log('index get', key);
+
         var bits = await this.db.get('objects', key);
-        if (bits instanceof Uint8Array)
-            return bits as Uint8Array;
+
+        console.log('index got', bits);
+
+        if (bits)
+            return bits as NotesBinDocument;
 
         return null;
     }
@@ -40,7 +59,8 @@ export class NotesBinIndexedDb {
     async storeBlob(key: string, contentType: string, etag: string, blob: Uint8Array, expectedEtag: string | undefined): Promise<boolean> {
         if (expectedEtag == undefined || expectedEtag == null) {
             var obj: NotesBinDocument = {
-                blob: blob,
+                id: key,
+                blobData: blob,
                 contentType: contentType,
                 etag: etag
             };
@@ -49,13 +69,14 @@ export class NotesBinIndexedDb {
             return true;
         }
 
-        var tx = this.db.transaction('objects', "readwrite");
+        var tx = this.db.transaction('objects', 'readwrite');
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key) as NotesBinDocument;
 
         if (existing == null || (existing as NotesBinDocument).etag == expectedEtag) {
             var obj: NotesBinDocument = {
-                blob: blob,
+                id: key,
+                blobData: blob,
                 contentType: contentType,
                 etag: etag
             };
