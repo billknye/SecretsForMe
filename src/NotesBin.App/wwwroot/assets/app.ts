@@ -13,6 +13,10 @@ export async function createIndexedDb(): Promise<NotesBinIndexedDb> {
     return instance;
 }
 
+export function testStatup(): void {
+    console.log('test startup');
+}
+
 export class NotesBinIndexedDb {
 
     private db: IDBPDatabase;

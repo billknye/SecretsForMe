@@ -1,4 +1,4 @@
-﻿namespace NotesBin.Core;
+﻿namespace NotesBin.Core.Configuration;
 
 public enum ConfigState
 {

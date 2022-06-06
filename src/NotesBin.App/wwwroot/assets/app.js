@@ -4,6 +4,9 @@ export async function createIndexedDb() {
     await instance.initialize();
     return instance;
 }
+export function testStatup() {
+    console.log('test startup');
+}
 export class NotesBinIndexedDb {
     db;
     async initialize() {

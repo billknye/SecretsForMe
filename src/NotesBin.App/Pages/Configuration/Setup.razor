@@ -2,6 +2,7 @@
 @using NotesBin.Core
 @layout SetupLayout
 @inject NotesManagerSetupProvider setupProvider
+@inject NavigationManager navigation
 
 @if (configuring)
 {
@@ -86,6 +87,8 @@ else
     {
         configuring = true;
         await setupProvider.CompleteSetup(model.Name, model.Password);
+
+        navigation.NavigateTo("/config/keys");
     }
 
     private class SetupModel

@@ -1,6 +1,6 @@
 ﻿using Blazored.LocalStorage;
 
-namespace NotesBin.Core;
+namespace NotesBin.Core.Configuration;
 
 public class NotesManagerSetupProvider
 {
@@ -18,6 +18,9 @@ public class NotesManagerSetupProvider
         var asymmetricKey = await configManager.AddAsymmetricKey();
         var credential = await configManager.AddCredential(asymmetricKey, name, password);
         await configManager.AddSymmetricKeyReference(symmetricKey, asymmetricKey);
+
+        //var contentProvider = 
+
         await configManager.SaveConfiguration();
     }
 }

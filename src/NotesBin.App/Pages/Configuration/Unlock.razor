@@ -71,7 +71,7 @@ else
         }
         else
         {
-            navigation.NavigateTo("/config");
+            navigation.NavigateTo("/");
         }
 
         working = false;
@@ -85,7 +85,7 @@ else
 
     private async Task ResetConfiguration()
     {
-        
+        navigation.NavigateTo("/config/setup");
     }
 
     private class UnlockModel

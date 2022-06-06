@@ -1,4 +1,6 @@
-﻿namespace NotesBin.Core;
+﻿using NotesBin.Core.Configuration;
+
+namespace NotesBin.Core;
 
 /// <summary>
 /// Wraps a blob provider layering in encrypting pinned to a specific symmetric key
@@ -6,13 +8,13 @@
 public class CryptoBlobProvider : IBlobProvider
 {
     private readonly IBlobProvider blobProvider;
-    private readonly SymmetricKey symmetricKey;
+    private readonly LoadedSymmetricKey symmetricKey;
     private readonly ICryptoProvider cryptoProvider;
 
     public SymmetricKey SymmetricKey => this.symmetricKey;
     public IBlobProvider BlobProvider => this.blobProvider;
 
-    public CryptoBlobProvider(IBlobProvider blobProvider, SymmetricKey symmetricKey, ICryptoProvider cryptoProvider)
+    public CryptoBlobProvider(IBlobProvider blobProvider, LoadedSymmetricKey symmetricKey, ICryptoProvider cryptoProvider)
     {
         this.blobProvider = blobProvider;
         this.symmetricKey = symmetricKey;

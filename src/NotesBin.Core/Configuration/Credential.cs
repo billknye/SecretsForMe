@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NotesBin.Core;
+namespace NotesBin.Core.Configuration;
 
 public class Credential
 {

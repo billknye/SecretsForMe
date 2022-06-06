@@ -23,24 +23,26 @@
                 <div class="list-group list-group-flush">
                     @foreach (var asymmetricKey in config.AsymmetricKeys)
                     {
-                        <a href="javascript:void(0);" class="list-group-item list-group-item-action @(selected == asymmetricKey ? "active" :"")" @onclick="() => Select(asymmetricKey)">@asymmetricKey.Id</a>
+                        <a href="javascript:void(0);" class="list-group-item list-group-item-action @(seletedAsymmetricKey == asymmetricKey ? "active" :"")" @onclick="() => Select(asymmetricKey)">@asymmetricKey.Id</a>
                     }
                 </div>
             </div>
 
             <a href="javascript:void(0);" class="btn btn-primary mt-1">Add Asymmetric Key</a>
         </div>
-        @if (selected != null)
+        @if (seletedAsymmetricKey != null)
         {
+            @if (seletedAsymmetricKey is LoadedAsymmetricKey loadedAsymmetricKey)
+            {
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
                         Credentials
                     </div>
                     <div class="list-group list-group-flush">
-                        @foreach (var credential in selected.Credentials)
+                        @foreach (var credential in loadedAsymmetricKey.Credentials)
                         {
-                            <a href="javascript:void(0);" class="list-group-item list-group-item-action">@credential.Id</a>
+                            <a href="javascript:void(0);" class="list-group-item list-group-item-action @(selectedCredential == credential ? "active" : "")" @onclick="() => Select(credential)">@credential.Id</a>
                         }
                     </div>
                 </div>
@@ -51,10 +53,14 @@
                         Symmetric Key References
                     </div>
                     <div class="list-group list-group-flush">
-
+                        @foreach (var reference in loadedAsymmetricKey.SymmetricKeyReferences)
+                        {
+                            <a href="javascript:void(0);" class="list-group-item list-group-item-action">@reference.SymmetricKey</a>
+                        }
                     </div>
                 </div>
             </div>
+            }
         }
     </div>
 </div>
@@ -78,20 +84,38 @@
     <tbody>
         @foreach (var symmetricKey in config.SymmetricKeys)
         {
+            @if (symmetricKey is LoadedSymmetricKey loadedSymmetricKey)
+            {
         <tr>
-            <td>@symmetricKey.Id</td>
-            <td>@symmetricKey.Name</td>
+            <td>@loadedSymmetricKey.Id</td>
+            <td>@loadedSymmetricKey.Name</td>
             <td></td>
         </tr>
+            }
+            else
+            {
+        <tr>
+            <td>@symmetricKey.Id</td>
+            <td><em>Not Loaded</em></td>
+            <td></td>
+        </tr>
+            }
         }
     </tbody>
 </table>
 
 @code {
-    private AsymmetricKey selected;
+    private AsymmetricKey? seletedAsymmetricKey;
+    private Credential? selectedCredential;
 
     private void Select(AsymmetricKey item)
     {
-        selected = item;
+        seletedAsymmetricKey = item;
+        selectedCredential = null;
+    }
+
+    private void Select(Credential item)
+    {
+        selectedCredential = item;
     }
 }

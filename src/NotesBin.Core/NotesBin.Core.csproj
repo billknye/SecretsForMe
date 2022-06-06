@@ -11,4 +11,8 @@
     <PackageReference Include="system.Reactive" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Content\" />
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,4 @@
-﻿@using NotesBin.Core
-@using NotesBin.Core.FileSystem
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 @inject NavigationManager navigation
 @inject ConfigManager config
 @inject FileSystemManager fileSystem
@@ -80,39 +78,7 @@ else
 
     override protected async Task OnInitializedAsync()
     {
-        loading = true;
-
-        /*navigation.LocationChanged += async (o, e) =>
-        {
-            this.indices = await fileSystem.GetRootEntries();
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(this.indices));
-            this.StateHasChanged();
-        };*/
-
-        if (config.State == ConfigState.Ready)
-        {
-            loading = false;
-            
-            this.indices = await fileSystem.GetRootEntries();
-            return;
-        }
-
-        await config.Initialize();
-        if (config.State == ConfigState.Empty)
-        {
-            navigation.NavigateTo("/config/setup");
-        }
-
-        if (config.State == ConfigState.ErrorLoading)
-        {
-            navigation.NavigateTo("/config/error");
-        }
-
-        if (config.State == ConfigState.Loaded)
-        {
-            navigation.NavigateTo("/config/unlock");
-        }
-
+        this.indices = await fileSystem.GetRootEntries();
     }
 
     private async Task Refresh()
