@@ -66,9 +66,7 @@ public class IndexedDbContentProvider : IContentProvider
     private async Task InitializeNewIndex()
     {
         root = new BlobDirectory(Guid.NewGuid(), "root", Enumerable.Empty<BlobDirectory>(), Enumerable.Empty<BlobContentItem>());
-
-        var serialized = root.GetSerializedBytes();
-        await cryptoBlobProvider.Put(contentProviderId, "root", null, serialized);
+        await SaveIndex();
     }
 
     private Task LoadIndex(Blob indexBlob)
@@ -106,24 +104,87 @@ public class IndexedDbContentProvider : IContentProvider
 
         foreach (var dir in containers)
         {
-            found = GetDirectory(dir.Directories, id);
+            found = GetDirectory(dir.Directories, id);            
             if (found != null)
                 return found;
         }
 
         return null;
     }
+
+    private static (BlobDirectory Directory, BlobContentItem ContentItem)? GetContentItem(BlobDirectory container, Guid id)
+    {
+        var found = container.ContentItems.FirstOrDefault(n => n.Id == id);
+        if (found != null)
+            return (container, found);
+
+        foreach (var dir in container.Directories)
+        {
+            var found2 = GetContentItem(dir, id);
+            if (found2 != null)
+                return found2;
+        }
+
+        return null;
+    }
+
+    public async Task CreateContentItem()
+    {
+        var item = new BlobContentItem(Guid.NewGuid(), "New Item", "text/plain", DateTimeOffset.UtcNow, null);
+        root.AddContentItem(item);
+        await SaveIndex();
+
+        await cryptoBlobProvider.Put(item.Id, "text/plain", null, Array.Empty<byte>());
+    }
+
+    private async Task SaveIndex()
+    {
+        var serialized = root.GetSerializedBytes();
+        await cryptoBlobProvider.Put(contentProviderId, "root", null, serialized);
+    }
+
+    public async Task<(BlobContentItem Item, byte[] Data)?> GetContentItem(Guid itemId)
+    {
+        var item = GetContentItem(root, itemId);
+
+        if (item == null)
+            return null;
+
+        var blob = await cryptoBlobProvider.Get(item.Value.ContentItem.Id);
+
+        return (item.Value.ContentItem, blob.BlobData);
+    }
+
+    public async Task UpdateContentItem(Guid contentItemId, string name, string contentType, byte[] content)
+    {
+        var existing = GetContentItem(root, contentItemId);
+        if (existing == null)
+            throw new InvalidOperationException();
+
+        var contentItem = existing.Value.ContentItem;
+
+        contentItem.Name = name;
+        contentItem.LastUpdated = DateTimeOffset.UtcNow;
+        contentItem.ContentType = contentType;
+
+        await cryptoBlobProvider.Put(contentItemId, contentType, null, content);
+
+        await SaveIndex();
+    }
 }
 
 public class BlobDirectory
 {
+    private readonly List<BlobDirectory> directories;
+    private readonly List<BlobContentItem> contentItems;
+
     public Guid Id { get; }
 
     public string Name { get; }
 
-    public IEnumerable<BlobDirectory> Directories { get; }
+    public IEnumerable<BlobDirectory> Directories => directories;
 
-    public IEnumerable<BlobContentItem> ContentItems { get; }
+    public IEnumerable<BlobContentItem> ContentItems => contentItems;
 
     public BlobDirectory(Blob rootBlob)
     {
@@ -131,8 +192,8 @@ public class BlobDirectory
             ?? throw new InvalidOperationException();
         Id = dir.Id;
         Name = dir.Name;
-        Directories = dir.Directories;
-        ContentItems = dir.ContentItems;
+        directories = dir.Directories.ToList();
+        contentItems = dir.ContentItems.ToList();
     }
 
     [System.Text.Json.Serialization.JsonConstructor]
@@ -140,8 +201,13 @@ public class BlobDirectory
     {
         Id = id;
         Name = name;
-        Directories = directories;
-        ContentItems = contentItems;
+        this.directories = directories.ToList();
+        this.contentItems = contentItems.ToList();
+    }
+
+    public void AddContentItem(BlobContentItem item)
+    {
+        this.contentItems.Add(item);
     }
 
     public byte[] GetSerializedBytes()
@@ -154,13 +220,13 @@ public class BlobContentItem
 {
     public Guid Id { get; }
 
-    public string Name { get; }
+    public string Name { get; set; }
 
-    public string ContentType { get; }
+    public string ContentType { get; set; }
 
-    public DateTimeOffset LastUpdated { get; }
+    public DateTimeOffset LastUpdated { get; set; }
 
-    public string ETag { get; }
+    public string ETag { get; set; }
 
     public BlobContentItem(Guid id, string name, string contentType, DateTimeOffset lastUpdated, string eTag)
     {
