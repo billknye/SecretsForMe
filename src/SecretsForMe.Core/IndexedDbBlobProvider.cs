@@ -8,20 +8,18 @@ public class IndexedDbBlobProvider : IBlobProvider
 {
     private readonly ILogger<IndexedDbBlobProvider> logger;
     private readonly IJSRuntime js;
-    private readonly string storeName;
     private IJSObjectReference? db;
 
-    public IndexedDbBlobProvider(ILogger<IndexedDbBlobProvider> logger, IJSRuntime js, string storeName)
+    public IndexedDbBlobProvider(ILogger<IndexedDbBlobProvider> logger, IJSRuntime js)
     {
         this.logger = logger;
         this.js = js;
-        this.storeName = storeName;
     }
     public async Task Initialize()
     {
         if (db != null) return;
         var dbLib = await js.InvokeAsync<IJSObjectReference>("import", "./assets/app.js");
-        db = await dbLib.InvokeAsync<IJSObjectReference>("createIndexedDb", storeName);
+        db = await dbLib.InvokeAsync<IJSObjectReference>("createIndexedDb");
     }
 
     public async Task<Blob?> Get(Guid key)

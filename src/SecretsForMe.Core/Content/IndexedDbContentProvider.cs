@@ -23,7 +23,7 @@ public class IndexedDbContentProvider : IContentProvider
         this.logger = logger;
         this.contentProviderId = contentProviderId;
         initializeLock = new SemaphoreSlim(1);
-        var indexedBlobProvider = new IndexedDbBlobProvider(loggerFactory.CreateLogger<IndexedDbBlobProvider>(), js, contentProviderId.ToString());
+        var indexedBlobProvider = new IndexedDbBlobProvider(loggerFactory.CreateLogger<IndexedDbBlobProvider>(), js);
         cryptoBlobProvider = new CryptoBlobProvider(indexedBlobProvider, loadedSymmetricKey, cryptoProvider);
     }
 

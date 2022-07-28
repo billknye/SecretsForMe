@@ -406,7 +406,9 @@ public class ConfigManager
         ArgumentNullException.ThrowIfNull(symmetricKey);
 
         var id = Guid.NewGuid();
-        contentProviders.Add(new LoadedContentProvider(loggerFactory, id, symmetricKey, name, js, cryptoProvider, providerOptions));
+        var provider = new LoadedContentProvider(loggerFactory, id, symmetricKey, name, js, cryptoProvider, providerOptions);
+        provider.ContentProvider.Initialize();
+        contentProviders.Add(provider);
 
         return Task.CompletedTask;
     }
