@@ -27,31 +27,5 @@
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
-
-
-    <script>
-
-        window.RSA_Test = async function() {
-
-            let keyPair = window.crypto.subtle.generateKey(
-                {
-                    name: "RSA-OAEP",
-                    modulusLength: 4096,
-                    publicExponent: new Uint8Array([1, 0, 1]),
-                    hash: "SHA-256"
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-
-            var a = await keyPair;
-
-            console.log(a);
-
-            return a;
-        };
-    </script>
-
 </body>
-
 </html>
