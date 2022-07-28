@@ -4,15 +4,11 @@ export async function createIndexedDb(storeName) {
     await instance.initialize();
     return instance;
 }
-export function testStatup() {
-    console.log('test startup');
-}
 export class SecretsForMeIndexedDb {
     storeName;
     db; // <SecretsForMeDb>;
     constructor(storeName) {
         this.storeName = storeName;
-        console.log('SecretsForMeIndexedDb ctor', this.storeName);
     }
     async initialize() {
         const store = this.storeName;
@@ -23,9 +19,7 @@ export class SecretsForMeIndexedDb {
         });
     }
     async getBlob(key) {
-        //console.log('index get', key);
         var bits = await this.db.get(this.storeName, key);
-        //console.log('index got', bits);
         if (bits)
             return bits;
         return null;

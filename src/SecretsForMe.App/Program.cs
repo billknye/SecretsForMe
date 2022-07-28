@@ -6,7 +6,6 @@ using Microsoft.JSInterop;
 using SecretsForMe.App;
 using SecretsForMe.Core;
 using SecretsForMe.Core.Configuration;
-using SecretsForMe.Core.FileSystem;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -21,7 +20,6 @@ builder.Services.AddScoped<ICryptoProvider, JsCryptoProvider>();
 builder.Services.AddScoped<IBlobProvider, IndexedDbBlobProvider>();
 builder.Services.AddScoped<SecretsManagerSetupProvider>();
 builder.Services.AddScoped<FileUtilities>();
-builder.Services.AddScoped<FileSystemManager>();
 
 var host = builder.Build();
 
