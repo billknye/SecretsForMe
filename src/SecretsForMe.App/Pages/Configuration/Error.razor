@@ -1,0 +1,12 @@
+﻿@page "/config/error"
+@using SecretsForMe.Core
+@layout SetupLayout
+@inject ConfigManager config
+
+<h3>Error Loading Configuration</h3>
+
+<pre>@config.LoadingException.ToString()</pre>
+
+@code {
+
+}

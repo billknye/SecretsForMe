@@ -1,0 +1,121 @@
+﻿@page "/config/keys"
+@using SecretsForMe.Core
+@layout ConfigLayout
+@inject ConfigManager config
+
+<h3>Keys</h3>
+
+<h4>Asymmetric Keys</h4>
+
+<p>
+    Asymmetric keys are Public/Private key pairs used to encrypt symmetric keys.  Each asymmetric key must have at least one credential
+    which can be used to decrypt the private key.  An asymmetric key can have multiple credentials, for example a password and a recovery
+    code.
+</p>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    Existing
+                </div>
+                <div class="list-group list-group-flush">
+                    @foreach (var asymmetricKey in config.AsymmetricKeys)
+                    {
+                        <a href="javascript:void(0);" class="list-group-item list-group-item-action @(seletedAsymmetricKey == asymmetricKey ? "active" :"")" @onclick="() => Select(asymmetricKey)">@asymmetricKey.Id</a>
+                    }
+                </div>
+            </div>
+
+            <a href="javascript:void(0);" class="btn btn-primary mt-1">Add Asymmetric Key</a>
+        </div>
+        @if (seletedAsymmetricKey != null)
+        {
+            @if (seletedAsymmetricKey is LoadedAsymmetricKey loadedAsymmetricKey)
+            {
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Credentials
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach (var credential in loadedAsymmetricKey.Credentials)
+                        {
+                            <a href="javascript:void(0);" class="list-group-item list-group-item-action @(selectedCredential == credential ? "active" : "")" @onclick="() => Select(credential)">@credential.Id</a>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        Symmetric Key References
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach (var reference in loadedAsymmetricKey.SymmetricKeyReferences)
+                        {
+                            <a href="javascript:void(0);" class="list-group-item list-group-item-action">@reference.SymmetricKey</a>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        }
+    </div>
+</div>
+
+<h4 class="mt-3">Symmetric Keys</h4>
+<p>
+    Symmetric keys are used to encrypt and decrypt data.  A default symmetric key is used to encrypt and decrypt the metadata such as the
+    index and configuration details.  Multiple symmetric keys can be used to provide various levels of access or even allow mulitple users
+    to share secrets.  Individual secrets can be only be encrypted by a single key but symmetric keys can be accessible by more than one
+    asymmetric key
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var symmetricKey in config.SymmetricKeys)
+        {
+            @if (symmetricKey is LoadedSymmetricKey loadedSymmetricKey)
+            {
+        <tr>
+            <td>@loadedSymmetricKey.Id</td>
+            <td>@loadedSymmetricKey.Name</td>
+            <td></td>
+        </tr>
+            }
+            else
+            {
+        <tr>
+            <td>@symmetricKey.Id</td>
+            <td><em>Not Loaded</em></td>
+            <td></td>
+        </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private AsymmetricKey? seletedAsymmetricKey;
+    private Credential? selectedCredential;
+
+    private void Select(AsymmetricKey item)
+    {
+        seletedAsymmetricKey = item;
+        selectedCredential = null;
+    }
+
+    private void Select(Credential item)
+    {
+        selectedCredential = item;
+    }
+}

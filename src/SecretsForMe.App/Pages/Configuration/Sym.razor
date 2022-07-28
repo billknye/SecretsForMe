@@ -1,0 +1,10 @@
+﻿@page "/config/keys/sym/{id:guid}"
+@inject ConfigManager config
+@layout ConfigLayout
+
+<h3>Symmetric Key</h3>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+}

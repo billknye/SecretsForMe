@@ -1,0 +1,10 @@
+﻿@page "/config/keys/cred/{id:guid}"
+@inject ConfigManager config
+@layout ConfigLayout
+
+<h3>Credential</h3>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+}

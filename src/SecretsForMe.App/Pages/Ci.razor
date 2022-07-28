@@ -1,0 +1,69 @@
+﻿@page "/ci/{id:guid}"
+@using SecretsForMe.Core.Content
+@using System.Text
+@inject ConfigManager config
+
+<h3>Content Item</h3>
+@if (model != null)
+{
+    <EditForm Model="@model" OnValidSubmit="OnSave">
+
+        <InputText id="name" @bind-Value="model.Name" />
+
+        <InputTextArea id="content" @bind-Value="model.Content" />
+
+        <button type="submit">Save</button>
+    </EditForm>
+}
+else
+{
+    <span>Loading...</span>
+}
+
+@code {
+
+    [Parameter]
+    public Guid Id{ get; set; }
+
+    private ContentItemModel model;
+
+    class ContentItemModel
+    {
+        public string Name{ get; set; }
+
+        public string Content{ get; set; }
+    }
+
+    IContentProvider contentProvider;
+
+    protected override async Task OnInitializedAsync()
+    {
+        contentProvider = config.ContentProviders.OfType<LoadedContentProvider>().First().ContentProvider;
+
+
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        model = null;
+
+        var contentItem = await contentProvider.GetContentItem(Id);
+
+        var content = Encoding.UTF8.GetString(contentItem.Value.Data);
+
+        model = new ContentItemModel
+        {
+            Name = contentItem.Value.Item.Name,
+            Content = content
+        };
+    }
+
+    private async Task OnSave()
+    {
+        var contentItem = await contentProvider.GetContentItem(Id);
+
+        var bytes = Encoding.UTF8.GetBytes(model.Content);
+        await contentProvider.UpdateContentItem(Id, model.Name, contentItem.Value.Item.ContentType, bytes);
+        
+    }
+}

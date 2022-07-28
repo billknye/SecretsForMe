@@ -1,0 +1,10 @@
+﻿@page "/config/keys/asym/{id:guid}"
+@inject ConfigManager config
+@layout ConfigLayout
+
+<h3>AsymmetricKey</h3>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+}
