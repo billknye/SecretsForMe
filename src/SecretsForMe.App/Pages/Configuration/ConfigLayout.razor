@@ -1,0 +1,107 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager navigation
+@inject ConfigManager config
+
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="/">SecretsForMe</a>
+    <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" @onclick="ToggleNavMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</header>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar @NavMenuCssClass">
+            <div class="position-sticky pt-3">
+
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 text-muted">
+                    <span>Configuration</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/config" Match="NavLinkMatch.All">
+                            <i class="fas fa-desktop"></i>
+                            Monitoring
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/config/keys">
+                            <i class="fas fa-user-lock"></i>
+                            Keys
+                        </NavLink>
+                        @if (config.State == ConfigState.Ready)
+                        {
+                        <ul class="nav flex-column">
+                            @foreach (var asymmetricKey in config.AsymmetricKeys)
+                            {
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="@($"/config/keys/asym/{asymmetricKey.Id}")">
+                                    <i class="fas fa-lock-open"></i>
+                                    @asymmetricKey.Id.ToShortString()
+                                </NavLink>
+                                @if (asymmetricKey is LoadedAsymmetricKey loadedAsymmetricKey)
+                                {
+                                <ul class="nav flex-column">                                
+                                    @foreach (var credential in loadedAsymmetricKey.Credentials)
+                                    {                                    
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="@($"/config/keys/cred/{credential.Id}")">
+                                            <i class="fas fa-id-card"></i>
+                                            @credential.Name
+                                        </NavLink>
+                                    </li>
+                                    }
+
+                                    @foreach (var sym in loadedAsymmetricKey.SymmetricKeyReferences)
+                                    {                                    
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="@($"/config/keys/sym/{sym.SymmetricKey.Id}")">
+                                            <i class="fas fa-key"></i>
+                                            @sym.SymmetricKey.Name
+                                        </NavLink>
+                                    </li>
+                                    }
+                                </ul>
+                                }
+                            </li>
+                            }
+                        </ul>
+                        }
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/config/db">
+                            <i class="fas fa-database"></i>
+                            Persistence
+                        </NavLink>
+                        <ul class="nav flex-column">
+                            @foreach (var contentProvider in config.ContentProviders)
+                            {
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="@($"/config/db/{contentProvider.Id}")">
+                                    <i class="fas fa-table"></i>
+                                    @contentProvider.Name
+                                </NavLink>
+                            </li>
+                            }
+                        </ul>
+                    </li>                    
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-2">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
