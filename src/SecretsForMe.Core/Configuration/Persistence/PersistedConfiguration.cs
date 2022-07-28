@@ -1,3 +1,3 @@
 ﻿namespace SecretsForMe.Core.Configuration.Persistence;
 
-public record PersistedConfiguration(PersistedAsymmetricKey[] AsymmetricKeys, PersistedSymmetricKey[] SymmetricKeys, PersistedContentProvider[] ContentProviders);
+public record PersistedConfiguration(Version SchemaVersion, PersistedAsymmetricKey[] AsymmetricKeys, PersistedSymmetricKey[] SymmetricKeys, PersistedContentProvider[] ContentProviders);

@@ -235,7 +235,9 @@ public class ConfigManager
         var contentProviderTasks = contentProviders.Select(n => PersistContentProvider(n));
         var contentProviderResults = await Task.WhenAll(contentProviderTasks);
 
-        var persisted = new PersistedConfiguration(asymmetricResults, symmetricResults, contentProviderResults);
+        var version = new Version(1, 0);
+
+        var persisted = new PersistedConfiguration(version, asymmetricResults, symmetricResults, contentProviderResults);
         var serializedConfiguration = System.Text.Json.JsonSerializer.Serialize(persisted);
 
         await localStorageService.SetItemAsStringAsync(LocalStorageKeyName, serializedConfiguration);
