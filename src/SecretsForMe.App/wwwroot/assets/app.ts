@@ -1,55 +1,38 @@
 ﻿
-import { openDB, DBSchema, IDBPDatabase } from './idb/build/index.js';
+import { openDB, IDBPDatabase } from './idb/build/index.js';
 
 interface SecretsForMeDocument {
     id: string,
     etag: string,
     contentType: string,
+    symmetricKeyId: string | null,
     blobData: Uint8Array
 }
 
-interface SecretsForMeDb extends DBSchema {
-    objects: {
-        key: string,
-        value: {
-            id: string,
-            etag: string,
-            contentType: string,
-            blobData: Uint8Array
-        },
-        indexes: {}
-    };
-}
-
-export async function createIndexedDb(): Promise<SecretsForMeIndexedDb> {
-    var instance = new SecretsForMeIndexedDb();
+export async function createIndexedDb(storeName: string): Promise<SecretsForMeIndexedDb> {
+    var instance = new SecretsForMeIndexedDb(storeName);
     await instance.initialize();
     return instance;
 }
 
-export function testStatup(): void {
-    console.log('test startup');
-}
-
 export class SecretsForMeIndexedDb {
+    private db: IDBPDatabase; // <SecretsForMeDb>;
 
-    private db: IDBPDatabase<SecretsForMeDb>;
+    constructor(private storeName: string) {
+    }
 
     public async initialize(): Promise<void> {
-        this.db = await openDB<SecretsForMeDb>('SecretsForMe', 1, {
-            upgrade(u: IDBPDatabase<SecretsForMeDb>) {
-                u.createObjectStore('objects');
+        const store = this.storeName;
+
+        this.db = await openDB('SecretsForMe', 1, {
+            upgrade(u: IDBPDatabase) {
+                u.createObjectStore(store);
             }
         });
     }
 
     async getBlob(key: string): Promise<SecretsForMeDocument> {
-        console.log('index get', key);
-
-        var bits = await this.db.get('objects', key);
-
-        console.log('index got', bits);
-
+        var bits = await this.db.get(this.storeName, key);
         if (bits)
             return bits as SecretsForMeDocument;
 
@@ -62,15 +45,16 @@ export class SecretsForMeIndexedDb {
                 id: key,
                 blobData: blob,
                 contentType: contentType,
+                symmetricKeyId: null,
                 etag: etag
             };
 
-            await this.db.put('objects', obj, key);
+            await this.db.put(this.storeName, obj, key);
             return true;
         }
 
-        var tx = this.db.transaction('objects', 'readwrite');
-        var storeObj = tx.objectStore('objects');
+        var tx = this.db.transaction(this.storeName, 'readwrite');
+        var storeObj = tx.objectStore(this.storeName);
         var existing = await storeObj.get(key) as SecretsForMeDocument;
 
         if (existing == null || (existing as SecretsForMeDocument).etag == expectedEtag) {
@@ -78,6 +62,7 @@ export class SecretsForMeIndexedDb {
                 id: key,
                 blobData: blob,
                 contentType: contentType,
+                symmetricKeyId: null,
                 etag: etag
             };
 
@@ -92,8 +77,8 @@ export class SecretsForMeIndexedDb {
     }
 
     async removeBlob(key: string, etag: string): Promise<boolean> {
-        var tx = this.db.transaction('objects', "readwrite");
-        var storeObj = tx.objectStore('objects');
+        var tx = this.db.transaction(this.storeName, "readwrite");
+        var storeObj = tx.objectStore(this.storeName);
         var existing = await storeObj.get(key) as SecretsForMeDocument;
 
         if (existing.etag == etag) {

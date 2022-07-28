@@ -1,7 +1,32 @@
 ﻿@page "/config/db"
+@inject ConfigManager config
 @layout ConfigLayout
 
 <h3>Persistence</h3>
+
+<a href="javascript:void(0);" class="btn btn-primary mt-1">Add AWS S3 Provider</a>
+<a href="javascript:void(0);" class="btn btn-primary mt-1">Add Azure Storage Provider</a>
+<a href="javascript:void(0);" class="btn btn-primary mt-1">Add Google Cloud Stroage Provider</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Id</th>
+            <th scope="col">Symmetric Key</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var provider in config.ContentProviders)
+        {
+        <tr>
+            <td>@provider.Name</td>
+            <td>@provider.Id</td>
+            <td>@provider.SymmetricKeyId</td>
+        </tr>
+        }
+    </tbody>
+</table>
 
 @code {
 

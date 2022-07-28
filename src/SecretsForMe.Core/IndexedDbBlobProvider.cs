@@ -8,13 +8,20 @@ public class IndexedDbBlobProvider : IBlobProvider
 {
     private readonly ILogger<IndexedDbBlobProvider> logger;
     private readonly IJSRuntime js;
-
+    private readonly string storeName;
     private IJSObjectReference? db;
 
-    public IndexedDbBlobProvider(ILogger<IndexedDbBlobProvider> logger, IJSRuntime js)
+    public IndexedDbBlobProvider(ILogger<IndexedDbBlobProvider> logger, IJSRuntime js, string storeName)
     {
         this.logger = logger;
         this.js = js;
+        this.storeName = storeName;
+    }
+    public async Task Initialize()
+    {
+        if (db != null) return;
+        var dbLib = await js.InvokeAsync<IJSObjectReference>("import", "./assets/app.js");
+        db = await dbLib.InvokeAsync<IJSObjectReference>("createIndexedDb", storeName);
     }
 
     public async Task<Blob?> Get(Guid key)
@@ -25,13 +32,7 @@ public class IndexedDbBlobProvider : IBlobProvider
         return await db.InvokeAsync<Blob?>("getBlob", key.ToString());
     }
 
-    public async Task Initialize()
-    {
-        if (db != null) return;
-        var dbLib = await js.InvokeAsync<IJSObjectReference>("import", "./assets/app.js");
-        db = await dbLib.InvokeAsync<IJSObjectReference>("createIndexedDb");
-    }
-
+    
     public async Task<bool> Put(Guid key, string contentType, string etag, byte[] data, string? expectedEtag = null)
     {
         if (db == null) throw new InvalidOperationException();
