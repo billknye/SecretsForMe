@@ -19,14 +19,11 @@ export class SecretsForMeIndexedDb {
             return bits;
         return null;
     }
-    async storeBlob(key, contentType, etag, blob, expectedEtag) {
-        if (expectedEtag == undefined || expectedEtag == null) {
+    async storeBlob(key, hash, blob, expectedHash) {
+        if (expectedHash == undefined || expectedHash == null) {
             var obj = {
-                id: key,
                 blobData: blob,
-                contentType: contentType,
-                symmetricKeyId: null,
-                etag: etag
+                hash: hash
             };
             await this.db.put('objects', obj, key);
             return true;
@@ -34,13 +31,10 @@ export class SecretsForMeIndexedDb {
         var tx = this.db.transaction('objects', 'readwrite');
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key);
-        if (existing == null || existing.etag == expectedEtag) {
+        if (existing == null || existing.hash == expectedHash) {
             var obj = {
-                id: key,
                 blobData: blob,
-                contentType: contentType,
-                symmetricKeyId: null,
-                etag: etag
+                hash: hash
             };
             await storeObj.put(obj, key);
             await tx.done;
@@ -51,11 +45,11 @@ export class SecretsForMeIndexedDb {
             return false;
         }
     }
-    async removeBlob(key, etag) {
+    async removeBlob(key, hash) {
         var tx = this.db.transaction('objects', "readwrite");
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key);
-        if (existing.etag == etag) {
+        if (existing.hash == hash) {
             await storeObj.delete(key);
             await tx.done;
             return true;

@@ -63,7 +63,7 @@ else
         var contentItem = await contentProvider.GetContentItem(Id);
 
         var bytes = Encoding.UTF8.GetBytes(model.Content);
-        await contentProvider.UpdateContentItem(Id, model.Name, contentItem.Value.Item.ContentType, bytes);
+        await contentProvider.UpdateContentItem(Id, model.Name, bytes);
         
     }
 }

@@ -20,9 +20,9 @@ public static class ContentProviderFactory
         if (!Guid.TryParse(typeId, out var typeGuid))
             throw new InvalidOperationException();
 
-        if (typeGuid == IndexedDbContentProvider.ContentProviderTypeId)
+        if (typeGuid == BlobBackedContentProvider.ContentProviderTypeId)
         {
-            var indexedDb = new IndexedDbContentProvider(loggerFactory, loggerFactory.CreateLogger<IndexedDbContentProvider>(), contentProviderId, loadedSymmetricKey, js, cryptoProvider);
+            var indexedDb = new BlobBackedContentProvider(loggerFactory, loggerFactory.CreateLogger<BlobBackedContentProvider>(), contentProviderId, loadedSymmetricKey, js, cryptoProvider);
             return indexedDb;
         }
 

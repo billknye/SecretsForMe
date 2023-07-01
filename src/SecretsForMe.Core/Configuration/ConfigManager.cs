@@ -35,7 +35,12 @@ public class ConfigManager
     public IEnumerable<SymmetricKey> SymmetricKeys => symmetricKeys ?? Enumerable.Empty<SymmetricKey>();
     public IEnumerable<ContentProvider> ContentProviders => contentProviders ?? Enumerable.Empty<ContentProvider>();
 
-    public ConfigManager(ILoggerFactory loggerFactory, ILogger<ConfigManager> logger, ILocalStorageService localStorageService, ICryptoProvider cryptoProvider, IJSRuntime js)
+    public ConfigManager(
+        ILoggerFactory loggerFactory, 
+        ILogger<ConfigManager> logger, 
+        ILocalStorageService localStorageService, 
+        ICryptoProvider cryptoProvider, 
+        IJSRuntime js)
     {
         this.loggerFactory = loggerFactory;
         this.logger = logger;
@@ -139,7 +144,7 @@ public class ConfigManager
                     var reference = asymmetricKey.SymmetricKeyReferences.FirstOrDefault(n => n.SymmetricKeyId == symmetricKey.Id);
                     if (reference == null)
                     {
-                        // Leave non-deryptable keys alone
+                        // Leave non-decryptable keys alone
                         var passThroughSymmetricKey = new PassThroughSymmetricKey(symmetricKey.Id, symmetricKey);
                         symmetricKeys.Add(passThroughSymmetricKey);
 
@@ -162,10 +167,7 @@ public class ConfigManager
                 {
                     var symmetricKey = symmetricKeys.OfType<LoadedSymmetricKey>().First(n => n.Id == reference.SymmetricKeyId);
 
-                    loadedAsymmetricKey.SymmetricKeyReferences.Add(new SymmetricKeyReference
-                    {
-                        SymmetricKey = symmetricKey
-                    });
+                    loadedAsymmetricKey.SymmetricKeyReferences.Add(new SymmetricKeyReference(symmetricKey));
                 }
 
                 var contentProviders = new List<ContentProvider>();
@@ -387,11 +389,7 @@ public class ConfigManager
         if (!symmetricKeys.Contains(symmetricKey))
             throw new InvalidOperationException();
 
-        asymmetricKey.SymmetricKeyReferences.Add(new SymmetricKeyReference
-        {
-            SymmetricKey = symmetricKey
-        });
-
+        asymmetricKey.SymmetricKeyReferences.Add(new SymmetricKeyReference(symmetricKey));
         return Task.CompletedTask;
     }
 

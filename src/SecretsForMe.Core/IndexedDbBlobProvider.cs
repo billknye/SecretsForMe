@@ -4,6 +4,9 @@ using SecretsForMe.Core;
 
 namespace SecretsForMe.Core;
 
+/// <summary>
+/// Provides low-level blob reading/writing functionality on top of indexed db.
+/// </summary>
 public class IndexedDbBlobProvider : IBlobProvider
 {
     private readonly ILogger<IndexedDbBlobProvider> logger;
@@ -27,16 +30,17 @@ public class IndexedDbBlobProvider : IBlobProvider
         if (db == null) throw new InvalidOperationException();
 
         logger.LogInformation("Get blob {key}", key);
-        return await db.InvokeAsync<Blob?>("getBlob", key.ToString());
+        var blob = await db.InvokeAsync<Blob?>("getBlob", key.ToString());
+        return blob;
     }
 
     
-    public async Task<bool> Put(Guid key, string contentType, string etag, byte[] data, string? expectedEtag = null)
+    public async Task<bool> Put(Guid key, string hash, byte[] data, string? expectedHash = null)
     {
         if (db == null) throw new InvalidOperationException();
 
         logger.LogInformation("Pub blob {key}", key);
-        return await db.InvokeAsync<bool>("storeBlob", key.ToString(), contentType, etag, data, expectedEtag);
+        return await db.InvokeAsync<bool>("storeBlob", key.ToString(), hash, data, expectedHash);
     }
 
     public async Task<bool> Remove(Guid key, string etag)

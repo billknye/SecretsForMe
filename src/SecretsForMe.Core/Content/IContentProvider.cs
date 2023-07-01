@@ -12,5 +12,5 @@ public interface IContentProvider
 
     Task CreateContentItem();
 
-    Task UpdateContentItem(Guid contentItemId, string name, string contentType, byte[] content);
+    Task UpdateContentItem(Guid contentItemId, string name, byte[] content);
 }

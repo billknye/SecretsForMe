@@ -2,7 +2,7 @@
 
 public enum ConfigState
 {
-    Uknown = 0,
+    Unknown = 0,
     Loaded = 1,
     ErrorLoading = 2,
     Ready = 3,

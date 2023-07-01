@@ -1,16 +1,21 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using SecretsForMe.Core.Configuration;
+using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace SecretsForMe.Core.Content;
 
-public class IndexedDbContentProvider : IContentProvider
+/// <summary>
+/// Provides content provider functionality on top of a blob provider.
+/// </summary>
+public class BlobBackedContentProvider : IContentProvider
 {
     public static Guid ContentProviderTypeId = Guid.Parse("455EF4D5-D21A-486F-A527-B3160EF0906E");
-    private readonly ILogger<IndexedDbContentProvider> logger;
+    private readonly ILogger<BlobBackedContentProvider> logger;
     private readonly Guid contentProviderId;
-    private IBlobProvider cryptoBlobProvider;
+    private readonly IBlobProvider blobProvider;
     private bool initialized;
     private SemaphoreSlim initializeLock;
 
@@ -18,13 +23,19 @@ public class IndexedDbContentProvider : IContentProvider
 
     public BlobDirectory Root => root ?? throw new InvalidOperationException();
 
-    public IndexedDbContentProvider(ILoggerFactory loggerFactory, ILogger<IndexedDbContentProvider> logger, Guid contentProviderId, LoadedSymmetricKey loadedSymmetricKey, IJSRuntime js, ICryptoProvider cryptoProvider)
+    public BlobBackedContentProvider(
+        ILoggerFactory loggerFactory, 
+        ILogger<BlobBackedContentProvider> logger, 
+        Guid contentProviderId, 
+        LoadedSymmetricKey loadedSymmetricKey, 
+        IJSRuntime js, 
+        ICryptoProvider cryptoProvider)
     {
         this.logger = logger;
         this.contentProviderId = contentProviderId;
         initializeLock = new SemaphoreSlim(1);
         var indexedBlobProvider = new IndexedDbBlobProvider(loggerFactory.CreateLogger<IndexedDbBlobProvider>(), js);
-        cryptoBlobProvider = new CryptoBlobProvider(indexedBlobProvider, loadedSymmetricKey, cryptoProvider);
+        blobProvider = new CryptoBlobProvider(indexedBlobProvider, loadedSymmetricKey, cryptoProvider);
     }
 
     public async Task Initialize()
@@ -39,10 +50,10 @@ public class IndexedDbContentProvider : IContentProvider
                 return;
 
             logger.LogInformation("Initializing crypto blob provider...");
-            await cryptoBlobProvider.Initialize();
+            await blobProvider.Initialize();
 
             logger.LogInformation("Getting root index blob...");
-            var indexBlob = await cryptoBlobProvider.Get(contentProviderId);
+            var indexBlob = await blobProvider.Get(contentProviderId);
             if (indexBlob == null)
             {
                 logger.LogInformation("Initializing new index blob...");
@@ -63,21 +74,6 @@ public class IndexedDbContentProvider : IContentProvider
         }
     }
 
-    private async Task InitializeNewIndex()
-    {
-        root = new BlobDirectory(Guid.NewGuid(), "root", Enumerable.Empty<BlobDirectory>(), Enumerable.Empty<BlobContentItem>());
-        await SaveIndex();
-    }
-
-    private Task LoadIndex(Blob indexBlob)
-    {
-        root = new BlobDirectory(indexBlob);
-
-        Console.WriteLine($"Loaded blob {System.Text.Encoding.UTF8.GetString(indexBlob.BlobData)}");
-
-        return Task.CompletedTask;
-    }
-
     public IEnumerable<BlobDirectory>? GetDirectories(Guid? parent)
     {
         var searchSet = parent == null ? root : GetDirectory(root.Directories, parent.Value);
@@ -96,6 +92,61 @@ public class IndexedDbContentProvider : IContentProvider
         return searchSet.ContentItems;
     }
 
+    public async Task CreateContentItem()
+    {
+        var item = new BlobContentItem(Guid.NewGuid(), "New Item", DateTimeOffset.UtcNow);
+        root.AddContentItem(item);
+        await SaveIndex();
+
+        var hash = Convert.ToHexString(SHA1.HashData(Array.Empty<byte>()));
+        await blobProvider.Put(item.Id, hash, Array.Empty<byte>());
+    }
+
+    public async Task<(BlobContentItem Item, byte[] Data)?> GetContentItem(Guid itemId)
+    {
+        var item = GetContentItem(root, itemId);
+
+        if (item == null)
+            return null;
+
+        var blob = await blobProvider.Get(item.Value.ContentItem.Id);
+
+        return (item.Value.ContentItem, blob.BlobData);
+    }
+
+    public async Task UpdateContentItem(Guid contentItemId, string name, byte[] content)
+    {
+        var existing = GetContentItem(root, contentItemId);
+        if (existing == null)
+            throw new InvalidOperationException();
+
+        var contentItem = existing.Value.ContentItem;
+
+        contentItem.Name = name;
+        contentItem.LastUpdated = DateTimeOffset.UtcNow;
+
+        var hash = Convert.ToHexString(SHA1.HashData(content));
+        await blobProvider.Put(contentItemId, hash, content);
+
+        await SaveIndex();
+    }    
+
+    private async Task InitializeNewIndex()
+    {
+        root = new BlobDirectory(Guid.NewGuid(), "root", Enumerable.Empty<BlobDirectory>(), Enumerable.Empty<BlobContentItem>());
+        await SaveIndex();
+    }
+
+    private Task LoadIndex(Blob indexBlob)
+    {
+        root = new BlobDirectory(indexBlob);
+
+        Console.WriteLine($"Loaded blob {System.Text.Encoding.UTF8.GetString(indexBlob.BlobData)}");
+
+        return Task.CompletedTask;
+    }
+
+   
     private static BlobDirectory? GetDirectory(IEnumerable<BlobDirectory> containers, Guid id)
     {
         var found = containers.FirstOrDefault(n => n.Id == id);
@@ -104,7 +155,7 @@ public class IndexedDbContentProvider : IContentProvider
 
         foreach (var dir in containers)
         {
-            found = GetDirectory(dir.Directories, id);            
+            found = GetDirectory(dir.Directories, id);
             if (found != null)
                 return found;
         }
@@ -128,49 +179,12 @@ public class IndexedDbContentProvider : IContentProvider
         return null;
     }
 
-    public async Task CreateContentItem()
-    {
-        var item = new BlobContentItem(Guid.NewGuid(), "New Item", "text/plain", DateTimeOffset.UtcNow, null);
-        root.AddContentItem(item);
-        await SaveIndex();
-
-        await cryptoBlobProvider.Put(item.Id, "text/plain", null, Array.Empty<byte>());
-    }
-
     private async Task SaveIndex()
     {
         var serialized = root.GetSerializedBytes();
-        await cryptoBlobProvider.Put(contentProviderId, "root", null, serialized);
-    }
-
-    public async Task<(BlobContentItem Item, byte[] Data)?> GetContentItem(Guid itemId)
-    {
-        var item = GetContentItem(root, itemId);
-
-        if (item == null)
-            return null;
-
-        var blob = await cryptoBlobProvider.Get(item.Value.ContentItem.Id);
-
-        return (item.Value.ContentItem, blob.BlobData);
-    }
-
-    public async Task UpdateContentItem(Guid contentItemId, string name, string contentType, byte[] content)
-    {
-        var existing = GetContentItem(root, contentItemId);
-        if (existing == null)
-            throw new InvalidOperationException();
-
-        var contentItem = existing.Value.ContentItem;
-
-        contentItem.Name = name;
-        contentItem.LastUpdated = DateTimeOffset.UtcNow;
-        contentItem.ContentType = contentType;
-
-        await cryptoBlobProvider.Put(contentItemId, contentType, null, content);
-
-        await SaveIndex();
-    }
+        var hash = Convert.ToHexString(SHA1.HashData(serialized));
+        await blobProvider.Put(contentProviderId, hash, serialized);
+    }    
 }
 
 public class BlobDirectory
@@ -222,18 +236,12 @@ public class BlobContentItem
 
     public string Name { get; set; }
 
-    public string ContentType { get; set; }
-
     public DateTimeOffset LastUpdated { get; set; }
 
-    public string ETag { get; set; }
-
-    public BlobContentItem(Guid id, string name, string contentType, DateTimeOffset lastUpdated, string eTag)
+    public BlobContentItem(Guid id, string name, DateTimeOffset lastUpdated)
     {
         Id = id;
         Name = name;
-        ContentType = contentType;
         LastUpdated = lastUpdated;
-        ETag = eTag;
     }
 }

@@ -22,7 +22,7 @@ public class SecretsManagerSetupProvider
 
         await configManager.AddContentProvider(symmetricKey, "Default IndexedDb", new Dictionary<string, string>
         {
-            { nameof(IndexedDbContentProvider.ContentProviderTypeId), IndexedDbContentProvider.ContentProviderTypeId.ToString() }
+            { nameof(BlobBackedContentProvider.ContentProviderTypeId), BlobBackedContentProvider.ContentProviderTypeId.ToString() }
         });
 
         await configManager.SaveConfiguration();

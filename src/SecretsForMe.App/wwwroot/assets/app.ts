@@ -2,10 +2,7 @@
 import { openDB, DBSchema, IDBPDatabase } from './idb/build/index.js';
 
 interface SecretsForMeDocument {
-    id: string,
-    etag: string,
-    contentType: string,
-    symmetricKeyId: string | null,
+    hash: string,
     blobData: Uint8Array
 }
 
@@ -43,14 +40,11 @@ export class SecretsForMeIndexedDb {
         return null;
     }
 
-    async storeBlob(key: string, contentType: string, etag: string, blob: Uint8Array, expectedEtag: string | undefined): Promise<boolean> {
-        if (expectedEtag == undefined || expectedEtag == null) {
+    async storeBlob(key: string, hash: string, blob: Uint8Array, expectedHash: string | undefined): Promise<boolean> {
+        if (expectedHash == undefined || expectedHash == null) {
             var obj: SecretsForMeDocument = {
-                id: key,
                 blobData: blob,
-                contentType: contentType,
-                symmetricKeyId: null,
-                etag: etag
+                hash: hash
             };
 
             await this.db.put('objects', obj, key);
@@ -61,13 +55,10 @@ export class SecretsForMeIndexedDb {
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key) as SecretsForMeDocument;
 
-        if (existing == null || (existing as SecretsForMeDocument).etag == expectedEtag) {
+        if (existing == null || (existing as SecretsForMeDocument).hash == expectedHash) {
             var obj: SecretsForMeDocument = {
-                id: key,
                 blobData: blob,
-                contentType: contentType,
-                symmetricKeyId: null,
-                etag: etag
+                hash: hash
             };
 
             await storeObj.put(obj, key);
@@ -80,12 +71,12 @@ export class SecretsForMeIndexedDb {
         }
     }
 
-    async removeBlob(key: string, etag: string): Promise<boolean> {
+    async removeBlob(key: string, hash: string): Promise<boolean> {
         var tx = this.db.transaction('objects', "readwrite");
         var storeObj = tx.objectStore('objects');
         var existing = await storeObj.get(key) as SecretsForMeDocument;
 
-        if (existing.etag == etag) {
+        if (existing.hash == hash) {
             await storeObj.delete(key);
             await tx.done;
             return true;
