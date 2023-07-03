@@ -50,3 +50,40 @@ public class CryptoBlobProvider : IBlobProvider
         return blobProvider.Remove(key, etag);
     }
 }
+
+public class BlobProviderFactory
+{
+    private readonly IEnumerable<IBlobProviderType> blobProviderTypes;
+
+    public BlobProviderFactory(IEnumerable<IBlobProviderType> blobProviderTypes)
+    {
+        this.blobProviderTypes = blobProviderTypes;
+    }
+
+    public async Task<IBlobProvider?> CreateProvider(Guid blobProviderTypeId)
+    {
+        var providerType = blobProviderTypes.FirstOrDefault(n => n.BlobProviderTypeId == blobProviderTypeId);
+        if (providerType == null)
+            return null;
+
+        var blobProvider = await providerType.CreateInstance();
+        return blobProvider;
+    }
+}
+
+public interface IBlobProviderType
+{
+    public Guid BlobProviderTypeId { get; }
+
+    public Task<IBlobProvider> CreateInstance();
+}
+
+internal sealed class CryptoBlobProviderType : IBlobProviderType
+{
+    public Guid BlobProviderTypeId => new Guid("AF6A30C2-A66D-44E0-BFA8-E4DF9C679F67");
+
+    public Task<IBlobProvider> CreateInstance()
+    {
+        throw new NotImplementedException();
+    }
+}
