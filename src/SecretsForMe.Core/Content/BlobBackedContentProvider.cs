@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using SecretsForMe.Core.Blobs;
 using SecretsForMe.Core.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;

@@ -8,6 +8,7 @@ namespace SecretsForMe.Core.Configuration;
 
 public class ConfigManager
 {
+    private const int PBKDF2Iterations = 1_000_000;
     private const string LocalStorageKeyName = "SecretsForMeConfig";
     private readonly ILoggerFactory loggerFactory;
     private readonly ILogger<ConfigManager> logger;
@@ -57,7 +58,7 @@ public class ConfigManager
         try
         {
             await cryptoProvider.Initialize();
-            existingConfig = await GetPeristedConfigString();
+            existingConfig = await GetPersistedConfigString();
         }
         catch (Exception ex)
         {
@@ -88,7 +89,7 @@ public class ConfigManager
         }
     }
 
-    public async Task<string> GetPeristedConfigString()
+    public async Task<string> GetPersistedConfigString()
     {
         var config = await localStorageService.GetItemAsStringAsync(LocalStorageKeyName);
         return config;
@@ -118,13 +119,13 @@ public class ConfigManager
             if (credential == null)
             {
                 asymmetricKeys.Add(new PassThroughAsymmetricKey(asymmetricKey));
-                logger.LogDebug("Loaded PasThrough Asymmetric Key: {AsymmetricKey}", asymmetricKey.Id);
+                logger.LogDebug("Loaded PassThrough Asymmetric Key: {AsymmetricKey}", asymmetricKey.Id);
                 continue;
             }
 
             try
             {
-                var bytes = await cryptoProvider.DeriveBytes(unlockData, 100000, credential.Id.ToByteArray());
+                var bytes = await cryptoProvider.DeriveBytes(unlockData, PBKDF2Iterations, credential.Id.ToByteArray());
                 var privateBytes = await cryptoProvider.AesDecrypt(asymmetricKey.Id.ToByteArray(), bytes, credential.EncryptedAsymmetricKeyPrivateKey);
 
                 var loadedAsymmetricKey = new LoadedAsymmetricKey(asymmetricKey.Id, asymmetricKey.PublicKey, privateBytes);
@@ -228,13 +229,13 @@ public class ConfigManager
         if (symmetricKeys == null || asymmetricKeys == null || contentProviders == null)
             throw new InvalidOperationException();
 
-        var asymmetricTasks = asymmetricKeys.Select(n => PersistAsymmetricKey(n));
+        var asymmetricTasks = asymmetricKeys.Select(n => GetPersistedAsymmetricKey(n));
         var asymmetricResults = await Task.WhenAll(asymmetricTasks);
 
         var symmetricTasks = symmetricKeys.Select(n => PersistSymmetricKey(n));
         var symmetricResults = await Task.WhenAll(symmetricTasks);
 
-        var contentProviderTasks = contentProviders.Select(n => PersistContentProvider(n));
+        var contentProviderTasks = contentProviders.Select(n => GetPersistedContentProvider(n));
         var contentProviderResults = await Task.WhenAll(contentProviderTasks);
 
         var version = new Version(1, 0);
@@ -269,11 +270,11 @@ public class ConfigManager
         throw new InvalidOperationException();
     }
 
-    private async Task<PersistedAsymmetricKey> PersistAsymmetricKey(AsymmetricKey asymmetricKey)
+    private async Task<PersistedAsymmetricKey> GetPersistedAsymmetricKey(AsymmetricKey asymmetricKey)
     {
         if (asymmetricKey is LoadedAsymmetricKey loaded)
         {
-            var credTasks = loaded.Credentials.Select(n => PersistCredential(loaded, n));
+            var credTasks = loaded.Credentials.Select(n => GetPersistedCredential(loaded, n));
             var credentials = await Task.WhenAll(credTasks);
 
             var refTasks = loaded.SymmetricKeyReferences.Select(n => PersistSymmetricKeyReference(asymmetricKey, n));
@@ -289,7 +290,7 @@ public class ConfigManager
         throw new InvalidOperationException();
     }
 
-    private async Task<PersistedCredential> PersistCredential(LoadedAsymmetricKey asymmetric, Credential credential)
+    private async Task<PersistedCredential> GetPersistedCredential(LoadedAsymmetricKey asymmetric, Credential credential)
     {
         var encryptedPrivateKey = await cryptoProvider.AesEncrypt(asymmetric.Id.ToByteArray(), credential.AesKey, asymmetric.PrivateKey);
         return new PersistedCredential(credential.Id, credential.Name, encryptedPrivateKey);
@@ -301,7 +302,7 @@ public class ConfigManager
         return new PersistedSymmetricKeyReference(symmetricKeyReference.SymmetricKey.Id, encryptedSymmetricKey);
     }
 
-    private async Task<PersistedContentProvider> PersistContentProvider(ContentProvider contentProvider)
+    private async Task<PersistedContentProvider> GetPersistedContentProvider(ContentProvider contentProvider)
     {
         if (contentProvider is PassThroughContentProvider passThroughContentProvider)
         {
@@ -365,7 +366,7 @@ public class ConfigManager
             throw new InvalidOperationException();
 
         var id = Guid.NewGuid();
-        var bytes = await cryptoProvider.DeriveBytes(password, 100000, id.ToByteArray());
+        var bytes = await cryptoProvider.DeriveBytes(password, PBKDF2Iterations, id.ToByteArray());
 
         var credential = new Credential
         {

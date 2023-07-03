@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.JSInterop;
 using SecretsForMe.App;
 using SecretsForMe.Core;
+using SecretsForMe.Core.Blobs;
 using SecretsForMe.Core.Configuration;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);

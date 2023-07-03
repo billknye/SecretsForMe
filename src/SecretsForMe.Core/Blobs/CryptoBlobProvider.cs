@@ -1,6 +1,6 @@
 ﻿using SecretsForMe.Core.Configuration;
 
-namespace SecretsForMe.Core;
+namespace SecretsForMe.Core.Blobs;
 
 /// <summary>
 /// Wraps a blob provider layering in encrypting pinned to a specific symmetric key
@@ -11,8 +11,8 @@ public class CryptoBlobProvider : IBlobProvider
     private readonly LoadedSymmetricKey symmetricKey;
     private readonly ICryptoProvider cryptoProvider;
 
-    public SymmetricKey SymmetricKey => this.symmetricKey;
-    public IBlobProvider BlobProvider => this.blobProvider;
+    public SymmetricKey SymmetricKey => symmetricKey;
+    public IBlobProvider BlobProvider => blobProvider;
 
     public CryptoBlobProvider(IBlobProvider blobProvider, LoadedSymmetricKey symmetricKey, ICryptoProvider cryptoProvider)
     {
@@ -49,11 +49,4 @@ public class CryptoBlobProvider : IBlobProvider
     {
         return blobProvider.Remove(key, etag);
     }
-}
-
-
-public static class WellKnownContentTypes
-{
-    public const string Root = "root";
-    public const string Directory = "directory";
 }

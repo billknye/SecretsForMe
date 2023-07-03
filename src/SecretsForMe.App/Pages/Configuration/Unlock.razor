@@ -80,7 +80,7 @@ else
 
     private async Task BackupConfiguration()
     {
-        var data = await config.GetPeristedConfigString();
+        var data = await config.GetPersistedConfigString();
         await file.DownloadFile("SecretsForMeConfig.txt", "application/json", Encoding.UTF8.GetBytes(data));
     }
 

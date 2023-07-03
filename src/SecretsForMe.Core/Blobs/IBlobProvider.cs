@@ -1,4 +1,4 @@
-﻿namespace SecretsForMe.Core;
+﻿namespace SecretsForMe.Core.Blobs;
 
 public interface IBlobProvider
 {
